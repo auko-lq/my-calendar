@@ -2,7 +2,7 @@
 
 ## 效果图
 
-![效果图](F:\学习\笔记\markdown\img\效果图-1574266326915.png)
+![效果图](https://github.com/aukocharlie/my-calendar/blob/master/img/%E6%95%88%E6%9E%9C%E5%9B%BE.png)
 
 ## 功能
 
