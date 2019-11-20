@@ -8,6 +8,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ThreadPoolExecutor;
 
+import javax.management.RuntimeErrorException;
 import javax.swing.*;
 import java.awt.*;
 import java.text.SimpleDateFormat;
@@ -25,11 +26,11 @@ public class CalendarUI {
         CalendarUI calendar = new CalendarUI();
     }
 
-    private int height = 900;
-    private int width = 600;
+    private int height;
+    private int width;
 
-    private int initX = 1320;
-    private int initY = 113;
+    private int initX;
+    private int initY;
 
     private Color bgColor = new Color(27, 88, 167);
 
@@ -51,12 +52,35 @@ public class CalendarUI {
     private Box contentBox = Box.createVerticalBox();
 
     private HashMap<String, List<String>> toDoList = new HashMap<>();
-    private File file = new File(CalendarUI.class.getResource("/").getFile(), "toDoList.txt");
+    private File file;
 
     /**
      * 无参构造方法
      */
     public CalendarUI() {
+        // conf最终指向根目录, 和src同级
+        File conf = new File(System.getProperty("user.dir")).getParentFile();
+        Properties props = new Properties();
+        InputStream is = null;
+        try {
+            is = new FileInputStream(new File(conf.getAbsolutePath(), "config.properties"));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        if(is == null){
+            throw new RuntimeException("找不到properties文件");
+        }else{
+            try {
+                props.load(is);
+                initX = Integer.parseInt(props.getProperty("initX"));
+                initY = Integer.parseInt(props.getProperty("initY"));
+                width = Integer.parseInt(props.getProperty("width"));
+                height = Integer.parseInt(props.getProperty("height"));
+                is.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         init();
     }
 
@@ -66,9 +90,11 @@ public class CalendarUI {
      * @param initX 初始位置x
      * @param initY 初始位置y
      */
-    public CalendarUI(int initX, int initY) {
+    public CalendarUI(int initX, int initY, int width, int height) {
         this.initX = initX;
         this.initY = initY;
+        this.width = width;
+        this.height = height;
         init();
     }
 
@@ -85,8 +111,11 @@ public class CalendarUI {
      * 初始化
      */
     private void init() {
-
-        readToDoFile();
+        // file 最终指向根目录 和src同级目录
+        file = new File(new File(System.getProperty("user.dir")).getParentFile().getAbsolutePath(), "toDoList.txt");
+        if(file.exists()){
+            readToDoFile();
+        }
 
         frame = new JFrame("calendar");
 
