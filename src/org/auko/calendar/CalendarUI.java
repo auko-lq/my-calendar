@@ -455,6 +455,9 @@ public class CalendarUI {
     }
 
 
+    /**
+     * 显示下方待办事项板块
+     */
     private void showToDo() {
         thread.execute(() -> {
             Box bottomBox = Box.createVerticalBox();
@@ -483,6 +486,10 @@ public class CalendarUI {
     }
 
 
+    /**
+     * 显示待办事项板块的顶部
+     * @param toDoTop 顶部面板
+     */
     private void showToDoTop(JPanel toDoTop) {
         JLabel title = new JLabel("待办事项");
         title.setFont(new Font("宋体", Font.PLAIN, 40));
@@ -500,6 +507,9 @@ public class CalendarUI {
     }
 
 
+    /**
+     * 显示待办事项的列表
+     */
     private void showToDoList() {
         contentBox.removeAll();
 
@@ -515,6 +525,10 @@ public class CalendarUI {
         }
     }
 
+    /**
+     * 创建一个待办事项item
+     * @param toDoContent item的内容
+     */
     private void createToDoItem(String toDoContent) {
         // 需不需要将内容以label形式打印
         boolean needPrint = toDoContent != null && !"".equals(toDoContent);
