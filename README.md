@@ -11,3 +11,9 @@
 - 支持通过文件保存每天的待办事项
 - 前后两百年的日历显示
 
+## 配置`config.properties`
+
+- initX -- 初试X轴位置
+- initY -- 初试Y轴位置
+- height -- 窗口高度
+- width -- 窗口宽度
