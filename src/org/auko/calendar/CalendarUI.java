@@ -47,9 +47,11 @@ public class CalendarUI {
 
     private ThreadPoolExecutor thread = new ThreadPoolExecutor(10, 15, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(5));
 
+    // toDoList contentBox
+    private Box contentBox = Box.createVerticalBox();
+
     private HashMap<String, List<String>> toDoList = new HashMap<>();
     private File file = new File(CalendarUI.class.getResource("/").getFile(), "toDoList.txt");
-    ;
 
     /**
      * 无参构造方法
@@ -174,22 +176,19 @@ public class CalendarUI {
     /**
      * 读取toDo文件
      */
-    private void readToDoFile(){
-            try (
+    private void readToDoFile() {
+        try (
                 BufferedReader bufferedReader = new BufferedReader(new FileReader(file))
-            ){
-                String line;
-                while ((line = bufferedReader.readLine()) !=null){
-                    System.out.println(line);
-                    String date = line.substring(0, line.indexOf("="));
-                    String content = line.substring(line.indexOf("=")+1);
-                    System.out.println("date: "+date);
-                    System.out.println("content: "+content);
-                    keepToMap(date, content);
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
+        ) {
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                String date = line.substring(0, line.indexOf("="));
+                String content = line.substring(line.indexOf("=") + 1);
+                keepToMap(date, content);
             }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -415,7 +414,10 @@ public class CalendarUI {
             calendarItem.addMouseListener(new MyMouseLisener(calendarItem));
 
             Date tempDate = calendar.getTime();
-            calendarItem.addActionListener(e -> selectedDate = tempDate);
+            calendarItem.addActionListener(e -> {
+                selectedDate = tempDate;
+                showToDoList();
+            });
 
             calendar.add(Calendar.DATE, 1);
         }
@@ -440,7 +442,8 @@ public class CalendarUI {
             toDoListPanel.setOpaque(false);
             toDoListPanel.setLayout(new BorderLayout());
 
-            showToDoList(toDoListPanel);
+            toDoListPanel.add(contentBox, BorderLayout.CENTER);
+            showToDoList();
 
             bottomBox.add(toDoTopPanel);
             bottomBox.add(Box.createVerticalStrut(20));
@@ -464,17 +467,29 @@ public class CalendarUI {
 
         addBtn.addMouseListener(new MyMouseLisener(addBtn));
 
-        addBtn.addActionListener(e -> addToDo());
+        addBtn.addActionListener(e -> createToDoItem(null));
     }
 
 
-    private Box contentBox = Box.createVerticalBox();
+    private void showToDoList() {
+        contentBox.removeAll();
 
-    private void showToDoList(JPanel toDoList) {
-        toDoList.add(contentBox, BorderLayout.CENTER);
+        List<String> list;
+        try {
+            list = toDoList.get(fileFormat.format(selectedDate));
+            if(list == null) list = new ArrayList<>();
+        } catch (NullPointerException ex) {
+            list = new ArrayList<>();
+        }
+        for (String content : list) {
+            createToDoItem(content);
+        }
     }
 
-    private void addToDo() {
+    private void createToDoItem(String toDoContent) {
+        // 需不需要将内容以label形式打印
+        boolean needPrint = toDoContent != null && !"".equals(toDoContent);
+
         Box itemBox = Box.createVerticalBox();
 
         JPanel itemPanel = new JPanel();
@@ -487,20 +502,26 @@ public class CalendarUI {
         itemPanel.add(prefix, BorderLayout.WEST);
 
         JTextField toDoInput = new JTextField(" 请输入待办事项");
-        toDoInput.setBorder(null);
-        toDoInput.requestFocusInWindow();
-        toDoInput.addFocusListener(new FocusListener() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                if (toDoInput.getText().equals(" 请输入待办事项")) toDoInput.setText("");
-            }
 
-            @Override
-            public void focusLost(FocusEvent e) {
-                if (toDoInput.getText().equals("")) toDoInput.setText(" 请输入待办事项");
-            }
-        });
-        itemPanel.add(toDoInput, BorderLayout.CENTER);
+        JLabel toDoLabel = new JLabel();
+        if (needPrint) {
+            itemPanel.add(addToDo(toDoLabel, toDoContent), BorderLayout.CENTER);
+        } else {
+            toDoInput.setBorder(null);
+            toDoInput.requestFocusInWindow();
+            toDoInput.addFocusListener(new FocusListener() {
+                @Override
+                public void focusGained(FocusEvent e) {
+                    if (toDoInput.getText().equals(" 请输入待办事项")) toDoInput.setText("");
+                }
+
+                @Override
+                public void focusLost(FocusEvent e) {
+                    if (toDoInput.getText().equals("")) toDoInput.setText(" 请输入待办事项");
+                }
+            });
+            itemPanel.add(toDoInput, BorderLayout.CENTER);
+        }
 
         // 用于组装右边两个按钮
         Box btnBox = Box.createHorizontalBox();
@@ -508,9 +529,11 @@ public class CalendarUI {
         btnBox.add(Box.createHorizontalStrut(10));
 
         JButton sureBtn = new JButton("ok");
-        Util.initBtnStyle(sureBtn);
-        sureBtn.addMouseListener(new MyMouseLisener(sureBtn));
-        btnBox.add(sureBtn);
+        if (!needPrint) {
+            Util.initBtnStyle(sureBtn);
+            sureBtn.addMouseListener(new MyMouseLisener(sureBtn));
+            btnBox.add(sureBtn);
+        }
 
         btnBox.add(Box.createHorizontalStrut(10));
 
@@ -525,32 +548,53 @@ public class CalendarUI {
         itemBox.add(Box.createVerticalStrut(10));
         contentBox.add(itemBox);
 
-        cancelBtn.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                contentBox.remove(itemBox);
+        cancelBtn.addActionListener(e -> {
+            if (needPrint) {
+                // 有内容才去移除
+                removeToDo(toDoLabel.getText());
             }
+            contentBox.remove(itemBox);
         });
 
-        sureBtn.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String content = toDoInput.getText();
-                if (!"".equals(content) && !" 请输入待办事项".equals(content)) {
-                    // 不为空或修改了, 把输入框的内容显示出来, 并存入文件
-                    JLabel toDo = new JLabel(content);
-                    toDo.setFont(new Font("宋体", Font.BOLD, 25));
-                    toDo.setForeground(Color.WHITE);
+        sureBtn.addActionListener(e -> {
+            String content = toDoInput.getText();
+            if (!"".equals(content) && !" 请输入待办事项".equals(content)) {
+                // 不为空或修改了, 把输入框的内容显示出来, 并存入文件
 
-                    itemPanel.remove(toDoInput);
-                    btnBox.remove(sureBtn);
-                    itemPanel.add(toDo, BorderLayout.CENTER);
+                itemPanel.remove(toDoInput);
+                btnBox.remove(sureBtn);
+                itemPanel.add(addToDo(toDoLabel, content), BorderLayout.CENTER);
 
-                    keepToMap(fileFormat.format(selectedDate), content);
-                }
+                keepToMap(fileFormat.format(selectedDate), content);
             }
         });
     }
+
+    /**
+     * 新增toDo
+     *
+     * @param toDo    文本组件
+     * @param content 内容
+     * @return 返回填成了内容的文本组件
+     */
+    private JLabel addToDo(JLabel toDo, String content) {
+        toDo.setText(content);
+        toDo.setFont(new Font("宋体", Font.BOLD, 25));
+        toDo.setForeground(Color.WHITE);
+        return toDo;
+    }
+
+    /**
+     * 移除toDo
+     *
+     * @param content toDo的内容
+     */
+    private void removeToDo(String content) {
+        List<String> list = toDoList.get(fileFormat.format(selectedDate));
+        list.remove(content);
+        toDoList.put(fileFormat.format(selectedDate), list);
+    }
+
 
     /**
      * 保存到map
