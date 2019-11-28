@@ -38,6 +38,8 @@ public class CalendarUI {
     private Date nowTime = new Date();
     // 日历中选中的日期, 默认为当前date
     protected static Date selectedDate = new Date();
+    private static JButton selectedButton = new JButton();
+
 
     private int[] dayOfWeek = new int[]{7, 1, 2, 3, 4, 5, 6};
     private String[] dayOfWeekZn = new String[]{"一", "二", "三", "四", "五", "六", "七"};
@@ -64,11 +66,12 @@ public class CalendarUI {
         InputStream is = null;
         try {
             is = new FileInputStream(new File(conf.getAbsolutePath(), "config.properties"));
+//            is = new FileInputStream(new File("E:\\project\\java\\calendar\\config.properties"));
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            throw new RuntimeException("找不到properties文件");
         }
         if(is == null){
-            throw new RuntimeException("找不到properties文件");
+
         }else{
             try {
                 props.load(is);
@@ -78,7 +81,7 @@ public class CalendarUI {
                 height = Integer.parseInt(props.getProperty("height"));
                 is.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                throw new RuntimeException("IO 异常");
             }
         }
         init();
@@ -430,8 +433,14 @@ public class CalendarUI {
             if (Util.isSelectedDate(calendar, selectedDate)) {
                 // 如果为选中的日历元素, 修改样式
                 calendarItem.requestFocus();
+                selectedButton = calendarItem;
             }
 
+            List list = toDoList.get(fileFormat.format(calendar.getTime()));
+            if(list != null && list.size() > 0) {
+                // 若有toDo, 则修改样式
+                calendarItem.setForeground(Color.YELLOW);
+            }
 
             if (calendar.get(Calendar.MONTH) != thisMonth) {
                 // 不是本月, 改一下样式来区分
@@ -445,6 +454,7 @@ public class CalendarUI {
             Date tempDate = calendar.getTime();
             calendarItem.addActionListener(e -> {
                 selectedDate = tempDate;
+                selectedButton = calendarItem;
                 showToDoList();
             });
 
@@ -597,6 +607,12 @@ public class CalendarUI {
                 removeToDo(toDoLabel.getText());
             }
             contentBox.remove(itemBox);
+
+            // 移除后检查是否全部移除, 若为空, 则将字体恢复为黑色
+            List list = toDoList.get(fileFormat.format(selectedDate));
+            if(list == null || list.size() == 0) {
+                selectedButton.setForeground(Color.BLACK);
+            }
         });
 
         sureBtn.addActionListener(e -> {
@@ -609,6 +625,7 @@ public class CalendarUI {
                 itemPanel.add(addToDo(toDoLabel, content), BorderLayout.CENTER);
 
                 keepToMap(fileFormat.format(selectedDate), content);
+                selectedButton.setForeground(Color.YELLOW);
             }
         });
     }

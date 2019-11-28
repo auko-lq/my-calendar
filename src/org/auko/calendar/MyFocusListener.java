@@ -34,7 +34,10 @@ public class MyFocusListener implements FocusListener {
     @Override
     public void focusGained(FocusEvent e) {
         btn.setBorderPainted(true);
-        btn.setForeground(Color.BLACK);
+        if(!(btn.getForeground() == Color.YELLOW)){
+            // 只有不为黄色时才改成黑色, 黄色代表当天有toDo记录
+            btn.setForeground(Color.BLACK);
+        }
         btn.setContentAreaFilled(true);
         btn.setBackground(Color.LIGHT_GRAY);
 
@@ -73,11 +76,14 @@ public class MyFocusListener implements FocusListener {
     private void cleanBtnStyle(JButton cleanBtn){
         if (!isToday) {
             cleanBtn.setBorderPainted(false);
-            if (cleanBtn.getFont().getSize() < 23) {
-                // 小号字说明不是本月
-                cleanBtn.setForeground(Color.LIGHT_GRAY);
-            } else {
-                cleanBtn.setForeground(Color.WHITE);
+            if(!(cleanBtn.getForeground() == Color.YELLOW)){
+                // 当原来的样式不是黄色时, 才改颜色, 因为黄色代表当天有toDo记录
+                if (cleanBtn.getFont().getSize() < 23) {
+                    // 小号字说明不是本月
+                    cleanBtn.setForeground(Color.LIGHT_GRAY);
+                } else {
+                    cleanBtn.setForeground(Color.WHITE);
+                }
             }
             cleanBtn.setContentAreaFilled(false);
         } else {
