@@ -16,7 +16,7 @@ import java.text.SimpleDateFormat;
 /**
  * @packageName: calendar
  * @className: CalendarUI
- * @Description:
+ * @Description: 自实现日历
  * @author: auko
  * @data 2019-10-25 8:42
  */
@@ -54,6 +54,7 @@ public class CalendarUI {
     private Box contentBox = Box.createVerticalBox();
 
     private HashMap<String, List<String>> toDoList = new HashMap<>();
+    // 存放toDoList的文件
     private File file;
 
     /**
@@ -66,23 +67,16 @@ public class CalendarUI {
         InputStream is = null;
         try {
             is = new FileInputStream(new File(conf.getAbsolutePath(), "config.properties"));
-//            is = new FileInputStream(new File("E:\\project\\java\\calendar\\config.properties"));
+            props.load(is);
+            initX = Integer.parseInt(props.getProperty("initX"));
+            initY = Integer.parseInt(props.getProperty("initY"));
+            width = Integer.parseInt(props.getProperty("width"));
+            height = Integer.parseInt(props.getProperty("height"));
+            is.close();
         } catch (FileNotFoundException e) {
             throw new RuntimeException("找不到properties文件");
-        }
-        if(is == null){
-
-        }else{
-            try {
-                props.load(is);
-                initX = Integer.parseInt(props.getProperty("initX"));
-                initY = Integer.parseInt(props.getProperty("initY"));
-                width = Integer.parseInt(props.getProperty("width"));
-                height = Integer.parseInt(props.getProperty("height"));
-                is.close();
-            } catch (IOException e) {
-                throw new RuntimeException("IO 异常");
-            }
+        } catch (IOException e) {
+            throw new RuntimeException("IO 异常");
         }
         init();
     }
@@ -116,7 +110,7 @@ public class CalendarUI {
     private void init() {
         // file 最终指向根目录 和src同级目录
         file = new File(new File(System.getProperty("user.dir")).getParentFile().getAbsolutePath(), "toDoList.txt");
-        if(file.exists()){
+        if (file.exists()) {
             readToDoFile();
         }
 
@@ -198,7 +192,7 @@ public class CalendarUI {
                     }
                     printWriter.close();
                 } catch (IOException ex) {
-                    ex.printStackTrace();
+                    throw new RuntimeException("写入toDoList文件出现异常");
                 }
             }
         });
@@ -219,13 +213,12 @@ public class CalendarUI {
                 keepToMap(date, content);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException("读取toDoList文件出现异常");
         }
     }
 
     /**
-     * @Author: auko on 2019-11-11 10:09
-     * @Description: 更新日期
+     * 更新时间
      */
     private void updateTime() {
         thread.execute(() -> {
@@ -234,7 +227,7 @@ public class CalendarUI {
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    throw new RuntimeException("更新时间出现异常");
                 }
             }
         });
@@ -242,8 +235,7 @@ public class CalendarUI {
 
 
     /**
-     * @Author: auko on 2019-10-25 9:22
-     * @Description: 显示顶部时间栏
+     * 显示顶部时间栏
      */
     private void showTopTime() {
         thread.execute(() -> {
@@ -309,6 +301,10 @@ public class CalendarUI {
 
     /**
      * 显示操作日历的组件
+     *
+     * @param changeCalendarPanel 操作组件面板
+     * @param centerPanel         中间面板
+     * @param calendarItemPanel   日历元素面板
      */
     private void showChangeCalendar(JPanel changeCalendarPanel, JPanel centerPanel, JPanel calendarItemPanel) {
 
@@ -381,6 +377,8 @@ public class CalendarUI {
 
     /**
      * 显示日历上方的星期数
+     *
+     * @param calendarTopPanel 日历顶部面板
      */
     private void showCalendarTop(JPanel calendarTopPanel) {
         for (int i = 0; i < 7; i++) {
@@ -437,7 +435,7 @@ public class CalendarUI {
             }
 
             List list = toDoList.get(fileFormat.format(calendar.getTime()));
-            if(list != null && list.size() > 0) {
+            if (list != null && list.size() > 0) {
                 // 若有toDo, 则修改样式
                 calendarItem.setForeground(Color.YELLOW);
             }
@@ -498,6 +496,7 @@ public class CalendarUI {
 
     /**
      * 显示待办事项板块的顶部
+     *
      * @param toDoTop 顶部面板
      */
     private void showToDoTop(JPanel toDoTop) {
@@ -526,7 +525,7 @@ public class CalendarUI {
         List<String> list;
         try {
             list = toDoList.get(fileFormat.format(selectedDate));
-            if(list == null) list = new ArrayList<>();
+            if (list == null) list = new ArrayList<>();
         } catch (NullPointerException ex) {
             list = new ArrayList<>();
         }
@@ -537,6 +536,7 @@ public class CalendarUI {
 
     /**
      * 创建一个待办事项item
+     *
      * @param toDoContent item的内容
      */
     private void createToDoItem(String toDoContent) {
@@ -610,7 +610,7 @@ public class CalendarUI {
 
             // 移除后检查是否全部移除, 若为空, 则将字体恢复为黑色
             List list = toDoList.get(fileFormat.format(selectedDate));
-            if(list == null || list.size() == 0) {
+            if (list == null || list.size() == 0) {
                 selectedButton.setForeground(Color.BLACK);
             }
         });
@@ -655,11 +655,11 @@ public class CalendarUI {
         toDoList.put(fileFormat.format(selectedDate), list);
     }
 
-
     /**
-     * 保存到map
+     * 暂时保存到map
      *
-     * @param toDoContent toDo内容
+     * @param date        日期
+     * @param toDoContent 待办事项内容
      */
     private void keepToMap(String date, String toDoContent) {
         List<String> list;
