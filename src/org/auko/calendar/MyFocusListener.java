@@ -46,10 +46,10 @@ public class MyFocusListener implements FocusListener {
         if (clickHistory.size() > 0){
             if(!previousIsToday){
                 cleanBtnStyle(clickHistory.get(0));
-                clickHistory.clear();
             }else{
                 clickHistory.get(0).setBackground(Color.WHITE);
             }
+            clickHistory.clear();
             previousIsToday = false;
         }
     }
