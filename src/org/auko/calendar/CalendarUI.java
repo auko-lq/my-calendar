@@ -23,7 +23,7 @@ import java.text.SimpleDateFormat;
 public class CalendarUI {
 
     public static void main(String argv[]) {
-        CalendarUI calendar = new CalendarUI();
+        CalendarUI calendar = new CalendarUI(1320,113,600,900);
     }
 
     private int height;

@@ -19,6 +19,7 @@ public class MyFocusListener implements FocusListener {
 
     JButton btn;
     boolean isToday;
+    static boolean previousIsToday = false;
 
     static List<JButton> clickHistory = new ArrayList<>();
 
@@ -43,8 +44,13 @@ public class MyFocusListener implements FocusListener {
 
         // 如果点击记录中有未恢复的日历元素, 则将其恢复回默认样式
         if (clickHistory.size() > 0){
-            cleanBtnStyle(clickHistory.get(0));
-            clickHistory.clear();
+            if(!previousIsToday){
+                cleanBtnStyle(clickHistory.get(0));
+                clickHistory.clear();
+            }else{
+                clickHistory.get(0).setBackground(Color.WHITE);
+            }
+            previousIsToday = false;
         }
     }
 
@@ -65,6 +71,10 @@ public class MyFocusListener implements FocusListener {
             try {
                 JButton previousBtn = (JButton) e.getComponent();
                 clickHistory.add(previousBtn);
+                if(clickHistory.size() == 1){
+                    // 只记录第一个元素是否为今天
+                    previousIsToday = isToday ? true : false;
+                }
             } catch (ClassCastException ex) {
             }
         }
